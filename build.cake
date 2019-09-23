@@ -18,7 +18,7 @@ var solutionPath = "./" + projectName + ".sln";
 var branch = Argument("branch", EnvironmentVariable("APPVEYOR_REPO_BRANCH"));
 var isRelease = EnvironmentVariable("APPVEYOR_REPO_TAG") == "true";
 
-var nugetSource = "https://www.nuget.org/api/v2/package";
+var nugetSource = "https://www.nuget.org/api/v2/package/";
 var nugetApiKey = EnvironmentVariable("nugetApiKey");
 
 //////////////////////////////////////////////////////////////////////
@@ -102,7 +102,7 @@ Task("Deploy")
 			ApiKey = nugetApiKey
 		};
 
-		var files = GetFiles("./artifacts/**/*.nupkg");
+		var files = GetFiles("./artifacts/**/NullObject*.nupkg");
 		foreach(var file in files)
 		{
 			Information("Push package: {0}", file);
