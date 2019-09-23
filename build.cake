@@ -58,7 +58,7 @@ Task("Run-Unit-Tests")
         HtmlReport = true,
         NoAppDomain = true,
         OutputDirectory = "./build"
-    })
+    });
 });
 
 //////////////////////////////////////////////////////////////////////
