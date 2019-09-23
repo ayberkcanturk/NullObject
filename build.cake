@@ -1,10 +1,25 @@
-#tool nuget:?package=NUnit.ConsoleRunner&version=3.4.0
+#tool "nuget:?package=xunit.runner.console&version=2.3.1"
+#addin "nuget:?package=NuGet.Core&version=2.14.0"
+#addin nuget:?package=Cake.ArgumentHelpers
+#addin "Cake.ExtendedNuGet"
+
+using Cake.ExtendedNuGet;
+
 //////////////////////////////////////////////////////////////////////
 // ARGUMENTS
 //////////////////////////////////////////////////////////////////////
 
 var target = Argument("target", "Default");
 var configuration = Argument("configuration", "Release");
+
+var projectName = "NullObject";
+var solutionPath = "./" + projectName + ".sln";
+
+var branch = Argument("branch", EnvironmentVariable("APPVEYOR_REPO_BRANCH"));
+var isRelease = EnvironmentVariable("APPVEYOR_REPO_TAG") == "true";
+
+var nugetSource = "https://www.nuget.org/api/v2/package";
+var nugetApiKey = EnvironmentVariable("nugetApiKey");
 
 //////////////////////////////////////////////////////////////////////
 // PREPARATION
@@ -27,7 +42,7 @@ Task("Restore-NuGet-Packages")
     .IsDependentOn("Clean")
     .Does(() =>
 {
-    NuGetRestore("./NullObject.sln");
+    NuGetRestore(solutionPath);
 });
 
 Task("Build")
@@ -37,18 +52,18 @@ Task("Build")
     if(IsRunningOnWindows())
     {
       // Use MSBuild
-      MSBuild("./NullObject.sln", settings =>
+      MSBuild(solutionPath, settings =>
         settings.SetConfiguration(configuration));
     }
     else
     {
       // Use XBuild
-      XBuild("./NullObject.sln", settings =>
+      XBuild(solutionPath, settings =>
         settings.SetConfiguration(configuration));
     }
 });
 
-Task("Run-Unit-Tests")
+Task("Tests")
     .IsDependentOn("Build")
     .Does(() =>
 {
@@ -61,12 +76,50 @@ Task("Run-Unit-Tests")
     });
 });
 
+Task("Pack")
+	.WithCriteria(() => branch == "master" ) 
+	.IsDependentOn("Tests")
+	.Does(() =>
+	{
+		Information("Publish Libraries!");
+
+		var code = 0;
+		code = StartProcess("dotnet", "pack " + projectName + " -c Release -o ../artifacts");
+		if(code != 0)
+		{
+			Error($"dotnet pack failed with code {code}");
+		}
+	});
+
+Task("Deploy")
+	.WithCriteria(() => branch == "master" )
+	.IsDependentOn("Pack")
+	.Does(() =>
+	{
+		Information("Deploy Packages!");
+		var settings = new NuGetPushSettings {
+			Source = nugetSource,
+			ApiKey = nugetApiKey
+		};
+
+		var files = GetFiles("./artifacts/**/*.nupkg");
+		foreach(var file in files)
+		{
+			Information("Push package: {0}", file);
+			NuGetPush(file, settings);
+		}
+	});
+
+
 //////////////////////////////////////////////////////////////////////
 // TASK TARGETS
 //////////////////////////////////////////////////////////////////////
 
 Task("Default")
-    .IsDependentOn("Run-Unit-Tests");
+    .IsDependentOn("Build")
+	.IsDependentOn("Tests")
+    .IsDependentOn("Pack")
+    .IsDependentOn("Deploy");
 
 //////////////////////////////////////////////////////////////////////
 // EXECUTION
