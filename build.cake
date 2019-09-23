@@ -84,7 +84,7 @@ Task("Pack")
 		Information("Publish Libraries!");
 
 		var code = 0;
-		code = StartProcess("dotnet", "pack " + projectName + " -c Release -o ../artifacts");
+		code = StartProcess("dotnet", "pack " + solutionPath + " -c Release -o ../artifacts");
 		if(code != 0)
 		{
 			Error($"dotnet pack failed with code {code}");
