@@ -6,17 +6,17 @@ using System.Reflection.Emit;
 
 namespace NullObject
 {
-    public class NullObject
+    public class Null
     {
         private static readonly ModuleBuilder ModuleBuilder;
         private static readonly IDictionary<Type, Type> CachedTypes = new ConcurrentDictionary<Type, Type>();
 
-        static NullObject()
+        static Null()
         {
-            var assemblyName = new AssemblyName(string.Concat(nameof(NullObject), "Types"));
+            var assemblyName = new AssemblyName(string.Concat(nameof(Null), "Types"));
             var assemblyBuilder =
                 AssemblyBuilder.DefineDynamicAssembly(assemblyName, AssemblyBuilderAccess.RunAndCollect);
-            ModuleBuilder = assemblyBuilder.DefineDynamicModule(string.Concat(nameof(NullObject), "Module"));
+            ModuleBuilder = assemblyBuilder.DefineDynamicModule(string.Concat(nameof(Null), "Module"));
         }
 
         public static TInterfaceType Of<TInterfaceType>() where TInterfaceType : class
@@ -24,7 +24,7 @@ namespace NullObject
             var type = typeof(TInterfaceType);
 
             if (!type.IsInterface)
-                throw new NotSupportedException("NullObject only works with interfaces.");
+                throw new NotSupportedException("Null only works with interfaces.");
 
             if (!CachedTypes.ContainsKey(type))
                 CreateType(type);
