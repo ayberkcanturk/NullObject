@@ -102,7 +102,7 @@ Task("Deploy")
 			ApiKey = nugetApiKey
 		};
 
-		var files = GetFiles("./artifacts/**/NullObject*.nupkg");
+		var files = GetFiles("./src/artifacts/**/NullObject*.nupkg");
 		foreach(var file in files)
 		{
 			Information("Push package: {0}", file);
